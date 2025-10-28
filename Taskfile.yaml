@@ -1,0 +1,115 @@
+# GitHub Reporting Tool Taskfile
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  BINARY_NAME: ghreporting
+  BUILD_DIR: .
+  GO_VERSION: "1.21"
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the application
+    cmds:
+      - echo "Building {{.BINARY_NAME}}..."
+      - go mod tidy
+      - go build -o {{.BINARY_NAME}} {{.BUILD_DIR}}
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BINARY_NAME}}"
+
+  test:
+    desc: Run all tests
+    cmds:
+      - echo "Running tests..."
+      - go test ./...
+    sources:
+      - "**/*.go"
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - echo "Cleaning build artifacts..."
+      - rm -f {{.BINARY_NAME}}
+      - go clean
+
+  install:
+    desc: Install/update dependencies
+    cmds:
+      - echo "Installing dependencies..."
+      - go mod tidy
+      - go mod download
+
+  run:
+    desc: Run example (requires GITHUB_TOKEN env var)
+    deps: [build]
+    cmds:
+      - echo "Running example (requires GITHUB_TOKEN environment variable)..."
+      - |
+        if [ -z "$GITHUB_TOKEN" ]; then
+          echo "Warning: GITHUB_TOKEN not set. Using unauthenticated requests (limited rate)."
+        fi
+      - ./{{.BINARY_NAME}} -target octocat -since 2024-10-01 -until 2024-10-28
+
+  all:
+    desc: Build and test
+    deps: [install, build, test]
+
+  prod-install:
+    desc: Install for production use
+    deps: [build]
+    cmds:
+      - echo "Installing to /usr/local/bin (requires sudo)..."
+      - sudo cp {{.BINARY_NAME}} /usr/local/bin/
+      - echo "{{.BINARY_NAME}} installed successfully!"
+      - echo "You can now run '{{.BINARY_NAME}}' from anywhere."
+
+  lint:
+    desc: Run Go linter
+    cmds:
+      - echo "Running Go linter..."
+      - go fmt ./...
+      - go vet ./...
+    sources:
+      - "**/*.go"
+
+  dev:
+    desc: Development workflow - build and test on changes
+    deps: [build, test]
+    watch: true
+    sources:
+      - "**/*.go"
+
+  check:
+    desc: Run all checks (lint, test, build)
+    deps: [lint, test, build]
+
+  help:
+    desc: Show detailed help
+    cmds:
+      - echo "GitHub Reporting Tool"
+      - echo ""
+      - echo "Available tasks:"
+      - echo "  build        - Build the application"
+      - echo "  test         - Run all tests"
+      - echo "  clean        - Remove build artifacts"
+      - echo "  install      - Install dependencies"
+      - echo "  run          - Run with example parameters"
+      - echo "  all          - Install, build and test"
+      - echo "  prod-install - Install to /usr/local/bin"
+      - echo "  lint         - Run Go linter and formatter"
+      - echo "  dev          - Development mode with file watching"
+      - echo "  check        - Run all checks (lint, test, build)"
+      - echo "  help         - Show this help message"
+      - echo ""
+      - echo "Usage - task task-name"
+      - echo "Example - task build"
