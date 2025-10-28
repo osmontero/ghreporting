@@ -14,7 +14,7 @@ A command-line tool for generating comprehensive reports on GitHub repository ac
 ## Installation
 
 ### Prerequisites
-- Go 1.19 or later
+- Go 1.21 or later
 - GitHub Personal Access Token (optional but recommended for higher rate limits)
 
 ### Build from Source
