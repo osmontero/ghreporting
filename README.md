@@ -15,14 +15,37 @@ A command-line tool for generating comprehensive reports on GitHub repository ac
 
 ### Prerequisites
 - Go 1.21 or later
+- [Task](https://taskfile.dev/installation/) (optional, for using Taskfile)
 - GitHub Personal Access Token (optional but recommended for higher rate limits)
 
 ### Build from Source
 ```bash
 git clone https://github.com/osmontero/ghreporting.git
 cd ghreporting
+
+# Using Task (recommended)
+task build
+
+# Or using Go directly
 go mod tidy
 go build -o ghreporting
+```
+
+### Available Tasks
+If you have [Task](https://taskfile.dev/) installed, you can use these convenient commands:
+
+```bash
+task                # List all available tasks
+task build          # Build the application
+task test           # Run all tests
+task clean          # Remove build artifacts
+task install        # Install dependencies
+task run            # Run with example parameters
+task all            # Install, build and test
+task prod-install   # Install to /usr/local/bin
+task lint           # Run Go linter and formatter
+task dev            # Development mode with file watching
+task check          # Run all checks (lint, test, build)
 ```
 
 ## Usage

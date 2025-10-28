@@ -6,7 +6,7 @@ This document provides examples of how to use the GitHub Reporting Tool.
 
 1. **Build the tool:**
    ```bash
-   make build
+   task build
    # or
    go build -o ghreporting .
    ```
