@@ -5,7 +5,7 @@ A command-line tool for generating comprehensive reports on GitHub repository ac
 ## Features
 
 - **Repository Analysis**: Scans all repositories for a given GitHub user or organization
-- **Branch Coverage**: Analyzes commits across important branches (main, master, develop, etc.)
+- **Branch Coverage**: Analyzes commits across important branches (main, master, develop, etc.) or all branches with `-all-branches` flag
 - **Time-based Filtering**: Generates reports for specific date ranges
 - **Contributor Metrics**: Tracks code additions, deletions, and commit counts per contributor
 - **Multiple Output Formats**: Supports text, JSON, and CSV output formats
@@ -67,6 +67,9 @@ task check          # Run all checks (lint, test, build)
 # Or set environment variable
 export GITHUB_TOKEN=YOUR_GITHUB_TOKEN
 ./ghreporting -target username
+
+# Analyze all branches (not just important ones like main, master, develop)
+./ghreporting -target username -all-branches
 ```
 
 ### Output Options
@@ -81,6 +84,20 @@ export GITHUB_TOKEN=YOUR_GITHUB_TOKEN
 ./ghreporting -target username -format csv -output report.csv
 ```
 
+### Branch Analysis Options
+```bash
+# Analyze all branches (default: only important branches like main, master, develop)
+./ghreporting -target username -all-branches
+
+# Combine with other options
+./ghreporting -target username -all-branches -format json -output full_analysis.json
+
+# For comprehensive analysis with date range
+./ghreporting -target username -all-branches -since 2024-01-01 -until 2024-01-31
+```
+
+**Note**: Using `-all-branches` will significantly increase API calls as it analyzes every branch in every repository. This may hit rate limits faster, especially for organizations with many repositories and branches. Consider using a GitHub token for higher rate limits.
+
 ### Command Line Options
 
 | Option | Description | Default |
@@ -91,6 +108,7 @@ export GITHUB_TOKEN=YOUR_GITHUB_TOKEN
 | `-until` | End date for analysis (YYYY-MM-DD) | Current date |
 | `-format` | Output format: `text`, `json`, `csv` | `text` |
 | `-output` | Output file path | stdout |
+| `-all-branches` | Analyze all branches instead of just important ones | `false` |
 
 ## GitHub Token Setup
 
@@ -200,7 +218,7 @@ Jane Smith,janesmith,jane@example.com,myorg/frontend-app,18,520,140
 - **Without token**: ~60 requests/hour (GitHub's unauthenticated limit)
 - **With token**: ~5,000 requests/hour (GitHub's authenticated limit)  
 - **Concurrent processing**: Uses worker pools to process repositories in parallel
-- **Branch selection**: Focuses on main branches (main, master, develop) to optimize API usage
+- **Branch selection**: By default, focuses on main branches (main, master, develop) to optimize API usage. Use `-all-branches` to analyze all branches (may increase API calls significantly)
 
 ## Error Handling
 
@@ -212,7 +230,7 @@ The tool gracefully handles common scenarios:
 
 ## Limitations
 
-- Processes only important branches to manage API rate limits
+- By default, processes only important branches to manage API rate limits (use `-all-branches` to analyze all branches)
 - Skips archived repositories
 - Large organizations may require multiple runs due to rate limits
 - Commit statistics are based on GitHub's diff calculations

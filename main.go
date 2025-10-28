@@ -14,12 +14,13 @@ import (
 
 func main() {
 	var (
-		orgUser    = flag.String("target", "", "GitHub organization or user (required)")
-		token      = flag.String("token", "", "GitHub token (optional, can use GITHUB_TOKEN env var)")
-		since      = flag.String("since", "", "Start date (YYYY-MM-DD) for commit analysis (default: 30 days ago)")
-		until      = flag.String("until", "", "End date (YYYY-MM-DD) for commit analysis (default: now)")
-		outputFile = flag.String("output", "", "Output file path (default: stdout)")
-		format     = flag.String("format", "text", "Output format: text, json, csv")
+		orgUser     = flag.String("target", "", "GitHub organization or user (required)")
+		token       = flag.String("token", "", "GitHub token (optional, can use GITHUB_TOKEN env var)")
+		since       = flag.String("since", "", "Start date (YYYY-MM-DD) for commit analysis (default: 30 days ago)")
+		until       = flag.String("until", "", "End date (YYYY-MM-DD) for commit analysis (default: now)")
+		outputFile  = flag.String("output", "", "Output file path (default: stdout)")
+		format      = flag.String("format", "text", "Output format: text, json, csv")
+		allBranches = flag.Bool("all-branches", false, "Analyze all branches instead of just important ones (main, master, develop, etc.)")
 	)
 	flag.Parse()
 
@@ -62,6 +63,7 @@ func main() {
 
 	// Create reporter
 	rep := reporter.NewReporter(ghClient)
+	rep.SetAllBranches(*allBranches)
 
 	// Generate report
 	ctx := context.Background()

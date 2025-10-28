@@ -18,12 +18,21 @@ import (
 
 // Reporter handles report generation
 type Reporter struct {
-	client *client.GitHubClient
+	client      *client.GitHubClient
+	allBranches bool
 }
 
 // NewReporter creates a new reporter instance
 func NewReporter(client *client.GitHubClient) *Reporter {
-	return &Reporter{client: client}
+	return &Reporter{
+		client:      client,
+		allBranches: false, // Default to analyzing only important branches
+	}
+}
+
+// SetAllBranches configures whether to analyze all branches or just important ones
+func (r *Reporter) SetAllBranches(allBranches bool) {
+	r.allBranches = allBranches
 }
 
 // GenerateReport generates a comprehensive report for the given target
@@ -101,10 +110,10 @@ func (r *Reporter) GenerateReport(ctx context.Context, target string, since, unt
 	summary := r.generateSummary(processedRepos)
 
 	return &models.Report{
-		Target:      target,
-		Period:      models.Period{Since: since, Until: until},
+		Target:       target,
+		Period:       models.Period{Since: since, Until: until},
 		Repositories: processedRepos,
-		Summary:     summary,
+		Summary:      summary,
 	}, nil
 }
 
@@ -158,10 +167,17 @@ func (r *Reporter) processRepository(ctx context.Context, repo models.Repository
 }
 
 func (r *Reporter) selectBranchesToProcess(branches []models.Branch, defaultBranch string) []models.Branch {
-	// Always include default branch
+	// If allBranches is enabled, return all branches
+	if r.allBranches {
+		log.Printf("Analyzing all %d branches", len(branches))
+		return branches
+	}
+
+	// Otherwise, use the limited set of important branches
 	var selected []models.Branch
 	branchMap := make(map[string]bool)
 
+	// Always include default branch
 	for _, branch := range branches {
 		if branch.Name == defaultBranch {
 			selected = append(selected, branch)
@@ -184,6 +200,7 @@ func (r *Reporter) selectBranchesToProcess(branches []models.Branch, defaultBran
 		}
 	}
 
+	log.Printf("Analyzing %d important branches out of %d total branches", len(selected), len(branches))
 	return selected
 }
 
@@ -362,7 +379,7 @@ func (r *Reporter) outputText(report *models.Report, outputFile string) error {
 		fmt.Fprintf(output, "  Total Additions: %d\n", stats.TotalAdditions)
 		fmt.Fprintf(output, "  Total Deletions: %d\n", stats.TotalDeletions)
 		fmt.Fprintf(output, "  Repositories: %d\n", len(stats.Repositories))
-		
+
 		// Show top repositories for this contributor
 		var repoNames []string
 		for repoName := range stats.Repositories {
@@ -380,7 +397,7 @@ func (r *Reporter) outputText(report *models.Report, outputFile string) error {
 				break
 			}
 			repoStats := stats.Repositories[repoName]
-			fmt.Fprintf(output, "    - %s: %d commits (+%d/-%d)\n", 
+			fmt.Fprintf(output, "    - %s: %d commits (+%d/-%d)\n",
 				repoName, repoStats.Commits, repoStats.Additions, repoStats.Deletions)
 		}
 		fmt.Fprintf(output, "\n")

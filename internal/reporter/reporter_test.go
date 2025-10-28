@@ -57,46 +57,75 @@ func TestGetAuthorKey(t *testing.T) {
 }
 
 func TestSelectBranchesToProcess(t *testing.T) {
-	r := &Reporter{}
-
 	branches := []models.Branch{
 		{Name: "feature/test"},
 		{Name: "main"},
 		{Name: "develop"},
 		{Name: "master"},
 		{Name: "feature/another"},
+		{Name: "hotfix/bug123"},
 	}
 
-	selected := r.selectBranchesToProcess(branches, "main")
+	t.Run("ImportantBranchesOnly", func(t *testing.T) {
+		r := &Reporter{allBranches: false}
 
-	// Should include main (default) and other important branches
-	expectedBranches := map[string]bool{
-		"main":    true,
-		"develop": true,
-		"master":  true,
-	}
+		selected := r.selectBranchesToProcess(branches, "main")
 
-	if len(selected) == 0 {
-		t.Error("Should select at least one branch")
-	}
-
-	for _, branch := range selected {
-		if !expectedBranches[branch.Name] {
-			t.Errorf("Unexpected branch selected: %s", branch.Name)
+		// Should include main (default) and other important branches
+		expectedBranches := map[string]bool{
+			"main":    true,
+			"develop": true,
+			"master":  true,
 		}
-	}
 
-	// Ensure main branch is included
-	found := false
-	for _, branch := range selected {
-		if branch.Name == "main" {
-			found = true
-			break
+		if len(selected) == 0 {
+			t.Error("Should select at least one branch")
 		}
-	}
-	if !found {
-		t.Error("Default branch 'main' should be included")
-	}
+
+		if len(selected) != 3 {
+			t.Errorf("Expected 3 branches, got %d", len(selected))
+		}
+
+		for _, branch := range selected {
+			if !expectedBranches[branch.Name] {
+				t.Errorf("Unexpected branch selected: %s", branch.Name)
+			}
+		}
+
+		// Ensure main branch is included
+		found := false
+		for _, branch := range selected {
+			if branch.Name == "main" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("Default branch 'main' should be included")
+		}
+	})
+
+	t.Run("AllBranches", func(t *testing.T) {
+		r := &Reporter{allBranches: true}
+
+		selected := r.selectBranchesToProcess(branches, "main")
+
+		// Should include all branches
+		if len(selected) != len(branches) {
+			t.Errorf("Expected %d branches, got %d", len(branches), len(selected))
+		}
+
+		branchNames := make(map[string]bool)
+		for _, branch := range selected {
+			branchNames[branch.Name] = true
+		}
+
+		for _, originalBranch := range branches {
+			if !branchNames[originalBranch.Name] {
+				t.Errorf("Branch %s should be included", originalBranch.Name)
+			}
+		}
+	})
 }
 
 func TestGenerateSummary(t *testing.T) {
